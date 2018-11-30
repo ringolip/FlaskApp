@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Page Title</title>
+</head>
+<body>
+    <form method="POST">
+        {{ form.csrf_token() }}
+        {{form.author.label}}
+        <p>{{form.author}}</p>
+        {% for err in form.author.errors%}
+            {{err}}
+        {% endfor %}
+        
+
+        {{form.book.label}}
+        <p>{{form.book}}</p>
+        {% for err in form.book.errors%}
+            {{err}}
+        {% endfor %}
+
+        {{form.submit}}
+
+    </form>
+
+
+    <ul>
+    {% for author in authors %}
+        <li>作者： {{author.name}}</li>
+        <ul>
+           {% for book in author.books %}
+            <li>书籍： {{book.name}}</li>
+            <!-- url以查询字符串拼接传入后端 -->
+            <a href="/del_book?book_id={{book.id}}">删除</a>
+            {% endfor %} 
+        </ul>
+    {% endfor %}
+    </ul>
+    
+</body>
+</html>
