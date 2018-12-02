@@ -1,10 +1,16 @@
 #-*- coding:utf-8 -*-
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template
 import hashlib 
 import xmltodict
 import time
+import urllib2
+import json
 
 RINGO_TOKEN = "ringo" # 微信接口Token
+
+APP_ID = "wx35a1eca48eb0e695"
+APP_SECRET = "f3659c174be984d4224f217a46954cbc"
+
 
 app = Flask(__name__)
 
@@ -72,6 +78,32 @@ def ringochat():
                     return_xml_str = xmltodict.unparse(return_dict)
                     return return_xml_str # 返回回复的xml字符串
 
+
+
+@app.route('/wechat/profile')
+def profile():
+    # 如果用户同意授权，页面将跳转至 redirect_uri/?code=CODE&state=STATE
+    # 若用户禁止授权，则重定向后不会带上code参数，仅会带上state参数redirect_uri?state=STATE
+
+    user_code = request.args.get("code") # redirect_uri/?code=CODE&state=STATE
+    if user_code is not None: # 如果用户同意授权
+        # 通过token 换取access_token
+        req_url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s&grant_type=authorization_code" % (APP_ID, APP_SECRET, user_code)
+        
+        # 获取access_token
+        response_obj = urllib2.urlopen(req_url) # 发送请求，返回相应对象
+        json_str = response_obj.read()
+        json_dict  = json.loads(json_str) # json转化为字典格式
+        
+        access_token = json_dict.get("access_token")
+        openid = json_dict.get("openid")
+
+        # 获取用户信息的json
+        userinfo_url = "https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s&lang=zh_CN" % (access_token, openid)
+        userinfo_json_str = urllib2.urlopen(userinfo_url).read()
+        userinfo_dict = json.loads(userinfo_json_str)
+
+        return render_template("userinfo.html", user=userinfo_dict) # 返回模板
 
 
 if __name__ == "__main__":
